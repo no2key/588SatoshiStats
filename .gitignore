@@ -1,5 +1,8 @@
 *.py[cod]
 
+# Datebase files
+*.db
+
 # C extensions
 *.so
 

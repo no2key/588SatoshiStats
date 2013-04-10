@@ -5,6 +5,8 @@ import requests
 import pprint
 import time
 import os
+import sqlite3
+import datetime
 
 SATOSHIperBTC = 100000000  # satoshi unit
 
@@ -53,6 +55,8 @@ class Bet(object):
 	def print_bet(self):
 		print '-----BET----'
 		print 'bet_tx_hash: %s' % self.bet_tx_hash
+		print 'bet_time: %s' % datetime.datetime.fromtimestamp(self.time).strftime('%Y-%m-%d %H-%M-%S')
+		print 'bet_seconds: %d' % self.time
 		print 's_addr: %s' % self.s_addr
 		print 'addr: %s' % self.payout_addr
 		print 'bet_amt: %d' % self.amt
@@ -60,8 +64,21 @@ class Bet(object):
 		print 'outcome: %s' % self.outcome
 
 def main():
+	conn = sqlite3.connect('bets.db')
+	c = conn.cursor()
+	try:
+		c.execute('''CREATE TABLE bets (bet_tx_hash text,
+									   time int,
+									   satoshi_addr text,
+									   bet_amount int,
+									   payout_addr text,
+									   payout_tx_hash text,
+									   payout_amount int,
+									   outcome text)''')
+	except:
+		pass
+
 	bets = {}
-	txs_from_st = {}
 
 	for block_num in range(230500, 230505):
 		url = 'http://blockchain.info/block-height/%d?format=json' % block_num
@@ -83,7 +100,7 @@ def main():
 				if tx['tx_index'] not in bets:
 					bet.s_addr = output['addr']
 					bet.amt = int(output['value'])
-					bet.time = tx['time']
+					bet.time = int(tx['time'])
 					bet.tx_index = tx['tx_index']
 					bet.bet_tx_hash = tx['hash']
 					bet.inputs = tx['inputs'] # save all inputs
@@ -111,16 +128,19 @@ def main():
 							if output['addr'] == bet.payout_addr:
 								bet.payout = int(output['value'])
 								if bet.payout == bet.amt * .005:
-									bet.outcome = 'Loss'
+									bet.outcome = 'loss'
 								else:
-									bet.outcome = 'Win'
+									bet.outcome = 'win'
 
 	for tx_index, bet in bets.items():
 		if bet.outcome is not None:
 			bet.print_bet()
+			c.execute("INSERT INTO bets VALUES (?, ?, ?, ?, ?, ?, ?, ?)" , (bet.bet_tx_hash, bet.time, bet.s_addr, bet.amt, bet.payout_addr, bet.payout_tx_hash, bet.payout, bet.outcome))
 		else:
 			print 'bet %s could not be matched!' % bet.bet_tx_hash
 
+	conn.commit()
+	conn.close()
 
 
 if __name__ == '__main__':

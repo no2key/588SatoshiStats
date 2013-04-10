@@ -3,6 +3,8 @@
 import json
 import requests
 import pprint
+import time
+import os
 
 SATOSHIperBTC = 100000000  # satoshi unit
 
@@ -34,9 +36,31 @@ addrs = {'1dice9wVtrKZTBbAZqz1XiTmboYyvpD3t' : 97.7,
 		 '1dice1Qf4Br5EYjj9rnHWqgMVYnQWehYG' : 0.003,
 		 '1dice1e6pdhLzzWQq7yMidf6j8eAg7pkY' : 0.002}
 
+class Bet(object):
+	def __init__(self):
+		self.s_addr = None
+		self.tx_index = None
+		self.bet_tx_hash = None
+		self.amt = None
+		self.time = None
+		self.payout = None
+		self.outcome = None
+		self.inputs = None
+		self.payout_addr = None
+		self.payout_tx_index = None
+		self.payout_tx_hash = None
+
+	def print_bet(self):
+		print '-----BET----'
+		print 'bet_tx_hash: %s' % self.bet_tx_hash
+		print 's_addr: %s' % self.s_addr
+		print 'addr: %s' % self.payout_addr
+		print 'bet_amt: %d' % self.amt
+		print 'payment: %d' % self.payout
+		print 'outcome: %s' % self.outcome
 
 def main():
-	txs_to_st = {}
+	bets = {}
 	txs_from_st = {}
 
 	for block_num in range(230500, 230505):
@@ -46,17 +70,29 @@ def main():
 		block =  raw_json['blocks'][0]
 		print 'Examining block %d' % block_num
 		for tx in block['tx']:
-			#pprint.pprint(tx, indent=4)
+			bet = Bet()
 			for output in tx['out']:
 				if output['type'] != 0:
 					continue
 				if output['addr'] not in addrs:
-					continue
-				if tx['tx_index'] not in txs_to_st:
-					txs_to_st[tx['tx_index']] = (output['addr_tag'], output['value'])
-					#print '#### %s recieved %s satoshi in TX %s' % (output['addr_tag'], output['value'], tx['tx_index'])
+					if output['value'] == '54321':
+						bet.payout_addr = output['addr']
+						continue
+					else:
+						continue
+				if tx['tx_index'] not in bets:
+					bet.s_addr = output['addr']
+					bet.amt = int(output['value'])
+					bet.time = tx['time']
+					bet.tx_index = tx['tx_index']
+					bet.bet_tx_hash = tx['hash']
+					bet.inputs = tx['inputs'] # save all inputs
+					# need to determine payout addr
+					if bet.payout_addr is None:
+						bet.payout_addr = tx['inputs'][0]['prev_out']['addr']
+					bets[tx['tx_index']] = bet
 
-	for block_num in range(230500, 230510):
+	for block_num in range(230500, 230505):
 		url = 'http://blockchain.info/block-height/%d?format=json' % block_num
 		r = requests.get(url)
 		raw_json = json.loads(r.text)
@@ -65,13 +101,26 @@ def main():
 		for tx in block['tx']:
 			for prev_out in tx['inputs']:
 				for key, value in prev_out.items():
-					if value['tx_index'] in txs_to_st and value['addr'] in addrs:
-						txs_from_st[tx['tx_index']] = (value['addr_tag'], value['value'])
-						#print '#### %s sent %s satoshi in TX %s to pay back TX %s' % (value['addr_tag'], value['value'], tx['tx_index'], value['tx_index'])
+					if value['tx_index'] not in bets:
+						continue
+					bet = bets[value['tx_index']]
+					if bet.s_addr == value['addr']:
+						bet.payout_tx_index = tx['tx_index']
+						bet.payout_tx_hash = tx['hash']
+						for output in tx['out']:
+							if output['addr'] == bet.payout_addr:
+								bet.payout = int(output['value'])
+								if bet.payout == bet.amt * .005:
+									bet.outcome = 'Loss'
+								else:
+									bet.outcome = 'Win'
 
+	for tx_index, bet in bets.items():
+		if bet.outcome is not None:
+			bet.print_bet()
+		else:
+			print 'bet %s could not be matched!' % bet.bet_tx_hash
 
-	print len(txs_to_st)
-	print len(txs_from_st)
 
 
 if __name__ == '__main__':

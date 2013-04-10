@@ -10,6 +10,9 @@ import datetime
 
 SATOSHIperBTC = 100000000  # satoshi unit
 
+START_BLOCK = 230000
+END_BLOCK = 230505
+
 addrs = {'1dice9wVtrKZTBbAZqz1XiTmboYyvpD3t' : 97.7,
 		 '1diceDCd27Cc22HV3qPNZKwGnZ8QwhLTc' : 91.6,
 		 '1dicegEArYHgbwQZhvr5G9Ah2s7SFuW1y' : 85.4,
@@ -80,7 +83,7 @@ def main():
 
 	bets = {}
 
-	for block_num in range(230500, 230505):
+	for block_num in range(START_BLOCK, END_BLOCK+1):
 		url = 'http://blockchain.info/block-height/%d?format=json' % block_num
 		r = requests.get(url)
 		raw_json = json.loads(r.text)
@@ -109,7 +112,7 @@ def main():
 						bet.payout_addr = tx['inputs'][0]['prev_out']['addr']
 					bets[tx['tx_index']] = bet
 
-	for block_num in range(230500, 230505):
+	for block_num in range(START_BLOCK, END_BLOCK+1):
 		url = 'http://blockchain.info/block-height/%d?format=json' % block_num
 		r = requests.get(url)
 		raw_json = json.loads(r.text)

@@ -10,36 +10,36 @@ import datetime
 
 SATOSHIperBTC = 100000000  # satoshi unit
 
-START_BLOCK = 230000
-END_BLOCK = 230505
+START_BLOCK = 228710
+END_BLOCK = 228712
 
-addrs = {'1dice9wVtrKZTBbAZqz1XiTmboYyvpD3t' : 97.7,
-		 '1diceDCd27Cc22HV3qPNZKwGnZ8QwhLTc' : 91.6,
-		 '1dicegEArYHgbwQZhvr5G9Ah2s7SFuW1y' : 85.4,
- 		 '1dicec9k7KpmQaA8Uc8aCCxfWnwEWzpXE' : 79.3,
-		 '1dice9wcMu5hLF4g81u8nioL5mmSHTApw' : 73.2,
-		 '1dice97ECuByXAvqXpaYzSaQuPVvrtmz6' : 50.0,
-		 '1dice8EMZmqKvrGE4Qc9bUFf9PX3xaYDp' : 48.8,
-		 '1dice7W2AicHosf5EL3GFDUVga7TgtPFn' : 36.6,
-		 '1dice7fUkz5h4z2wPc1wLMPWgB5mDwKDx' : 24.4,
-		 '1dice7EYzJag7SxkdKXLr8Jn14WUb3Cf1' : 18.3,
-		 '1dice6YgEVBf88erBFra9BHf6ZMoyvG88' : 12.2,
-		 '1dice6wBxymYi3t94heUAG6MpG5eceLG1' : 9.1,
-		 '1dice6GV5Rz2iaifPvX7RMjfhaNPC8SXH' : 6.1,
-		 '1dice6gJgPDYz8PLQyJb8cgPBnmWqCSuF' : 4.6,
-		 '1dice6DPtUMBpWgv8i4pG8HMjXv9qDJWN' : 3.1,
-		 '1dice61SNWEKWdA8LN6G44ewsiQfuCvge' : 2.3,
-		 '1dice5wwEZT2u6ESAdUGG6MHgCpbQqZiy' : 1.5,
-		 '1dice4J1mFEvVuFqD14HzdViHFGi9h4Pp' : 0.8,
-		 '1dice3jkpTvevsohA4Np1yP4uKzG1SRLv' : 0.4,
-		 '1dice37EemX64oHssTreXEFT3DXtZxVXK' : 0.2,
-		 '1dice2zdoxQHpGRNaAWiqbK82FQhr4fb5' : 0.1,
-		 '1dice2xkjAAiphomEJA5NoowpuJ18HT1s' : 0.05,
-		 '1dice2WmRTLf1dEk4HH3Xs8LDuXzaHEQU' : 0.02,
-		 '1dice2vQoUkQwDMbfDACM1xz6svEXdhYb' : 0.01,
-		 '1dice2pxmRZrtqBVzixvWnxsMa7wN2GCK' : 0.006,
-		 '1dice1Qf4Br5EYjj9rnHWqgMVYnQWehYG' : 0.003,
-		 '1dice1e6pdhLzzWQq7yMidf6j8eAg7pkY' : 0.002}
+addrs = {'1dice9wVtrKZTBbAZqz1XiTmboYyvpD3t' : (64000, 0.97656),
+		 '1diceDCd27Cc22HV3qPNZKwGnZ8QwhLTc' : (60000, 0.91553),
+		 '1dicegEArYHgbwQZhvr5G9Ah2s7SFuW1y' : (56000, 0.85449),
+ 		 '1dicec9k7KpmQaA8Uc8aCCxfWnwEWzpXE' : (52000, 0.79346),
+		 '1dice9wcMu5hLF4g81u8nioL5mmSHTApw' : (48000, 0.73242),
+		 '1dice97ECuByXAvqXpaYzSaQuPVvrtmz6' : (32768, 0.50000),
+		 '1dice8EMZmqKvrGE4Qc9bUFf9PX3xaYDp' : (32000, 0.48828),
+		 '1dice7W2AicHosf5EL3GFDUVga7TgtPFn' : (24000, 0.36621),
+		 '1dice7fUkz5h4z2wPc1wLMPWgB5mDwKDx' : (16000, 0.24414),
+		 '1dice7EYzJag7SxkdKXLr8Jn14WUb3Cf1' : (12000, 0.18311),
+		 '1dice6YgEVBf88erBFra9BHf6ZMoyvG88' : (8000, 0.12207),
+		 '1dice6wBxymYi3t94heUAG6MpG5eceLG1' : (6000, 0.09155),
+		 '1dice6GV5Rz2iaifPvX7RMjfhaNPC8SXH' : (4000, 0.06104),
+		 '1dice6gJgPDYz8PLQyJb8cgPBnmWqCSuF' : (3000, 0.04578),
+		 '1dice6DPtUMBpWgv8i4pG8HMjXv9qDJWN' : (2000, 0.03052),
+		 '1dice61SNWEKWdA8LN6G44ewsiQfuCvge' : (1500, 0.02289),
+		 '1dice5wwEZT2u6ESAdUGG6MHgCpbQqZiy' : (1000, 0.01526),
+		 '1dice4J1mFEvVuFqD14HzdViHFGi9h4Pp' : (512, 0.00781),
+		 '1dice3jkpTvevsohA4Np1yP4uKzG1SRLv' : (256, 0.00391),
+		 '1dice37EemX64oHssTreXEFT3DXtZxVXK' : (128, 0.00195),
+		 '1dice2zdoxQHpGRNaAWiqbK82FQhr4fb5' : (64, 0.00098),
+		 '1dice2xkjAAiphomEJA5NoowpuJ18HT1s' : (32, 0.00049),
+		 '1dice2WmRTLf1dEk4HH3Xs8LDuXzaHEQU' : (16, 0.00024),
+		 '1dice2vQoUkQwDMbfDACM1xz6svEXdhYb' : (8, 0.00012),
+		 '1dice2pxmRZrtqBVzixvWnxsMa7wN2GCK' : (4, 0.00006),
+		 '1dice1Qf4Br5EYjj9rnHWqgMVYnQWehYG' : (2, 0.00003),
+		 '1dice1e6pdhLzzWQq7yMidf6j8eAg7pkY' : (1, 0.00002)}
 
 class Bet(object):
 	def __init__(self):
@@ -96,6 +96,7 @@ def main():
 					continue
 				if output['addr'] not in addrs:
 					if output['value'] == '54321':
+						print 'here'
 						bet.payout_addr = output['addr']
 						continue
 					else:
@@ -130,17 +131,26 @@ def main():
 						for output in tx['out']:
 							if output['addr'] == bet.payout_addr:
 								bet.payout = int(output['value'])
-								if bet.payout == bet.amt * .005:
+								if bet.payout == bet.amt:
+									bet.outcome = 'refund'
+									print 'here'
+								elif bet.payout == bet.amt * .005:
 									bet.outcome = 'loss'
 								else:
 									bet.outcome = 'win'
 
+	unmatched_bets = 0
 	for tx_index, bet in bets.items():
+
 		if bet.outcome is not None:
-			bet.print_bet()
+			#bet.print_bet()
 			c.execute("INSERT INTO bets VALUES (?, ?, ?, ?, ?, ?, ?, ?)" , (bet.bet_tx_hash, bet.time, bet.s_addr, bet.amt, bet.payout_addr, bet.payout_tx_hash, bet.payout, bet.outcome))
 		else:
-			print 'bet %s could not be matched!' % bet.bet_tx_hash
+			unmatched_bets += 1
+			#print 'bet %s could not be matched!' % bet.bet_tx_hash
+
+	print len(bets)
+	print unmatched_bets
 
 	conn.commit()
 	conn.close()

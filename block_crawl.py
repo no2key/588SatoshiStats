@@ -10,8 +10,8 @@ import datetime
 
 SATOSHIperBTC = 100000000  # satoshi unit
 
-START_BLOCK = 228710
-END_BLOCK = 228712
+START_BLOCK = 228765
+END_BLOCK = 228767
 
 addrs = {'1dice9wVtrKZTBbAZqz1XiTmboYyvpD3t' : (64000, 0.97656),
 		 '1diceDCd27Cc22HV3qPNZKwGnZ8QwhLTc' : (60000, 0.91553),
@@ -47,6 +47,7 @@ class Bet(object):
 		self.tx_index = None
 		self.bet_tx_hash = None
 		self.amt = None
+		self.fee = None
 		self.time = None
 		self.payout = None
 		self.outcome = None
@@ -59,12 +60,26 @@ class Bet(object):
 		print '-----BET----'
 		print 'bet_tx_hash: %s' % self.bet_tx_hash
 		print 'bet_time: %s' % datetime.datetime.fromtimestamp(self.time).strftime('%Y-%m-%d %H-%M-%S')
-		print 'bet_seconds: %d' % self.time
+		print 'bet_time: %d' % self.time
 		print 's_addr: %s' % self.s_addr
 		print 'addr: %s' % self.payout_addr
 		print 'bet_amt: %d' % self.amt
-		print 'payment: %d' % self.payout
-		print 'outcome: %s' % self.outcome
+		print 'bet_fee: %d' % self.fee
+		if self.payout:
+			print 'payment: %d' % self.payout
+		if self.outcome:
+			print 'outcome: %s' % self.outcome
+
+def get_fee(tx):
+	btc_input = 0
+	btc_output = 0
+	for prev_out in tx['inputs']:
+		for key, value in prev_out.items():
+			btc_input += value['value']
+	for output in tx['out']:
+		btc_output += output['value']
+	return (btc_input - btc_output)
+
 
 def main():
 	conn = sqlite3.connect('bets.db')
@@ -74,6 +89,7 @@ def main():
 									   time int,
 									   satoshi_addr text,
 									   bet_amount int,
+									   bet_fee int,
 									   payout_addr text,
 									   payout_tx_hash text,
 									   payout_amount int,
@@ -90,20 +106,22 @@ def main():
 		block =  raw_json['blocks'][0]
 		print 'Examining block %d' % block_num
 		for tx in block['tx']:
-			bet = Bet()
+			# Check if bet to satoshi dice
 			for output in tx['out']:
-				if output['type'] != 0:
-					continue
-				if output['addr'] not in addrs:
-					if output['value'] == '54321':
-						print 'here'
-						bet.payout_addr = output['addr']
-						continue
-					else:
-						continue
-				if tx['tx_index'] not in bets:
+				if output['addr'] in addrs:
+					bet = Bet()
+					for output in tx['out']:
+						if output['type'] == 0:
+							if output['addr'] not in addrs:
+								#print output['value']
+								if output['value'] == 543210:
+									bet.payout_addr = output['addr']
+
+				tx_id = (tx['tx_index'], output['addr'])
+				if tx_id not in bets:
 					bet.s_addr = output['addr']
 					bet.amt = int(output['value'])
+					bet.fee = get_fee(tx)
 					bet.time = int(tx['time'])
 					bet.tx_index = tx['tx_index']
 					bet.bet_tx_hash = tx['hash']
@@ -111,40 +129,46 @@ def main():
 					# need to determine payout addr
 					if bet.payout_addr is None:
 						bet.payout_addr = tx['inputs'][0]['prev_out']['addr']
-					bets[tx['tx_index']] = bet
+					bets[tx_id] = bet
 
+	count = 0
 	for block_num in range(START_BLOCK, END_BLOCK+1):
 		url = 'http://blockchain.info/block-height/%d?format=json' % block_num
 		r = requests.get(url)
 		raw_json = json.loads(r.text)
 		block =  raw_json['blocks'][0]
+		
 		print 'Examining block %d' % block_num
 		for tx in block['tx']:
 			for prev_out in tx['inputs']:
 				for key, value in prev_out.items():
-					if value['tx_index'] not in bets:
+					if value['tx_index'] in bets:
+						print "tx %s matched to tx %s" % (tx['hash'], value['tx_index'])
+						count += 1
+						bet = bets[value['tx_index']]
+						if bet.s_addr == value['addr']:
+							bet.payout_tx_index = tx['tx_index']
+							bet.payout_tx_hash = tx['hash']
+							for output in tx['out']:
+								#print "comparing %s and %s" % (output['addr'], bet.payout_addr)
+								if output['addr'] == bet.payout_addr:
+									bet.payout = int(output['value'])
+									if bet.payout == bet.amt:
+										bet.outcome = 'refund'
+									elif bet.payout == bet.amt * .005:
+										bet.outcome = 'loss'
+									else:
+										bet.outcome = 'win'
 						continue
-					bet = bets[value['tx_index']]
-					if bet.s_addr == value['addr']:
-						bet.payout_tx_index = tx['tx_index']
-						bet.payout_tx_hash = tx['hash']
-						for output in tx['out']:
-							if output['addr'] == bet.payout_addr:
-								bet.payout = int(output['value'])
-								if bet.payout == bet.amt:
-									bet.outcome = 'refund'
-									print 'here'
-								elif bet.payout == bet.amt * .005:
-									bet.outcome = 'loss'
-								else:
-									bet.outcome = 'win'
+
+	print count
 
 	unmatched_bets = 0
 	for tx_index, bet in bets.items():
 
 		if bet.outcome is not None:
 			#bet.print_bet()
-			c.execute("INSERT INTO bets VALUES (?, ?, ?, ?, ?, ?, ?, ?)" , (bet.bet_tx_hash, bet.time, bet.s_addr, bet.amt, bet.payout_addr, bet.payout_tx_hash, bet.payout, bet.outcome))
+			c.execute("INSERT INTO bets VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)" , (bet.bet_tx_hash, bet.time, bet.s_addr, bet.amt, bet.fee, bet.payout_addr, bet.payout_tx_hash, bet.payout, bet.outcome))
 		else:
 			unmatched_bets += 1
 			#print 'bet %s could not be matched!' % bet.bet_tx_hash

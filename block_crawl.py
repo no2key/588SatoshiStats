@@ -132,7 +132,7 @@ def main():
 						bets[tx_id] = bet
 
 
-	for block_num in range(START_BLOCK, END_BLOCK+20):
+	for block_num in range(START_BLOCK, END_BLOCK+10):
 		url = 'http://blockchain.info/block-height/%d?format=json' % block_num
 		r = requests.get(url)
 		raw_json = json.loads(r.text)

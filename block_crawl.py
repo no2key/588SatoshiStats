@@ -61,8 +61,8 @@ class Bet(object):
 		print 'bet_tx_hash: %s' % self.bet_tx_hash
 		print 'bet_time: %s' % datetime.datetime.fromtimestamp(self.time).strftime('%Y-%m-%d %H-%M-%S')
 		print 'bet_time: %d' % self.time
-		print 's_addr: %s' % self.s_addr
-		print 'addr: %s' % self.payout_addr
+		print 'satoshi_addr: %s' % self.s_addr
+		print 'payout_addr: %s' % self.payout_addr
 		print 'bet_amt: %d' % self.amt
 		print 'bet_fee: %d' % self.fee
 		if self.payout:
@@ -110,29 +110,29 @@ def main():
 			for output in tx['out']:
 				if output['addr'] in addrs:
 					bet = Bet()
-					for output in tx['out']:
-						if output['type'] == 0:
-							if output['addr'] not in addrs:
-								#print output['value']
-								if output['value'] == 543210:
-									bet.payout_addr = output['addr']
+					# loop to find payout addr
+					for p_output in tx['out']:
+						if p_output['type'] == 0:
+							if p_output['addr'] not in addrs:
+								if p_output['value'] == 543210:
+									bet.payout_addr = p_output['addr']
 
-				tx_id = (tx['tx_index'], output['addr'])
-				if tx_id not in bets:
-					bet.s_addr = output['addr']
-					bet.amt = int(output['value'])
-					bet.fee = get_fee(tx)
-					bet.time = int(tx['time'])
-					bet.tx_index = tx['tx_index']
-					bet.bet_tx_hash = tx['hash']
-					bet.inputs = tx['inputs'] # save all inputs
-					# need to determine payout addr
-					if bet.payout_addr is None:
-						bet.payout_addr = tx['inputs'][0]['prev_out']['addr']
-					bets[tx_id] = bet
+					tx_id = (tx['tx_index'], output['addr'])
+					if tx_id not in bets:
+						bet.s_addr = output['addr']
+						bet.amt = int(output['value'])
+						bet.fee = get_fee(tx)
+						bet.time = int(tx['time'])
+						bet.tx_index = tx['tx_index']
+						bet.bet_tx_hash = tx['hash']
+						bet.inputs = tx['inputs'] # save all inputs
+						# need to determine payout addr
+						if bet.payout_addr is None:
+							bet.payout_addr = tx['inputs'][0]['prev_out']['addr']
+						bets[tx_id] = bet
 
-	count = 0
-	for block_num in range(START_BLOCK, END_BLOCK+1):
+
+	for block_num in range(START_BLOCK, END_BLOCK+20):
 		url = 'http://blockchain.info/block-height/%d?format=json' % block_num
 		r = requests.get(url)
 		raw_json = json.loads(r.text)
@@ -142,26 +142,23 @@ def main():
 		for tx in block['tx']:
 			for prev_out in tx['inputs']:
 				for key, value in prev_out.items():
-					if value['tx_index'] in bets:
-						print "tx %s matched to tx %s" % (tx['hash'], value['tx_index'])
-						count += 1
-						bet = bets[value['tx_index']]
-						if bet.s_addr == value['addr']:
-							bet.payout_tx_index = tx['tx_index']
-							bet.payout_tx_hash = tx['hash']
-							for output in tx['out']:
-								#print "comparing %s and %s" % (output['addr'], bet.payout_addr)
-								if output['addr'] == bet.payout_addr:
-									bet.payout = int(output['value'])
-									if bet.payout == bet.amt:
-										bet.outcome = 'refund'
-									elif bet.payout == bet.amt * .005:
-										bet.outcome = 'loss'
-									else:
-										bet.outcome = 'win'
-						continue
-
-	print count
+					if value['addr'] in addrs:
+						tx_id = (value['tx_index'], value['addr'])
+						if tx_id in bets:
+							bet = bets[tx_id]
+							if bet.s_addr == value['addr']:
+								bet.payout_tx_index = tx['tx_index']
+								bet.payout_tx_hash = tx['hash']
+								for output in tx['out']:
+									#print "comparing %s and %s" % (output['addr'], bet.payout_addr)
+									if output['addr'] == bet.payout_addr:
+										bet.payout = int(output['value'])
+										if bet.payout == bet.amt:
+											bet.outcome = 'refund'
+										elif bet.payout == bet.amt * .005:
+											bet.outcome = 'loss'
+										else:
+											bet.outcome = 'win'
 
 	unmatched_bets = 0
 	for tx_index, bet in bets.items():
@@ -170,6 +167,7 @@ def main():
 			#bet.print_bet()
 			c.execute("INSERT INTO bets VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)" , (bet.bet_tx_hash, bet.time, bet.s_addr, bet.amt, bet.fee, bet.payout_addr, bet.payout_tx_hash, bet.payout, bet.outcome))
 		else:
+			print bet.print_bet()
 			unmatched_bets += 1
 			#print 'bet %s could not be matched!' % bet.bet_tx_hash
 

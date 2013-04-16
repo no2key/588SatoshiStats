@@ -34,11 +34,16 @@ addrs = {'1dice9wVtrKZTBbAZqz1XiTmboYyvpD3t' : (64000, 0.97656),
 def parse_by_addr(cursor):
 
 	for addr, (target, chance) in addrs.items():
-		print 'Getting stats for %s which has a win percentage of %f' % (addr[:9], chance)
+		print 'Getting stats for %s which has a win percentage of %f' % (addr[:9], chance*100)
 		wins = 0.0
 		losses = 0.0
 		count = 0.0
 		for row in cursor.execute("SELECT * FROM bets WHERE satoshi_addr = ?" , [addr]):
+			if chance < 0.1:
+				if row[-1] == 'win':
+					print '-----'
+					print row[0]
+					print row[6]
 			if row[-1] == 'win':
 				wins += 1
 			else:
@@ -47,7 +52,7 @@ def parse_by_addr(cursor):
 		print ' wins: %d' % wins
 		print ' losses: %d' % losses
 		if count:
-			win_percentage = float(wins/count)
+			win_percentage = float(wins/count) * 100
 			print ' win percentage:  %f' % win_percentage
 			if win_percentage > chance:
 				print 'Betters are beating satoshi by %s percentage points.\n' % (win_percentage - chance)

@@ -14,7 +14,7 @@ SATOSHIperBTC = 100000000  # satoshi unit
 # 223665 229007
 
 START_BLOCK = 223665
-END_BLOCK = 223765
+END_BLOCK = 223670
 
 addrs = {'1dice9wVtrKZTBbAZqz1XiTmboYyvpD3t' : (64000, 0.97656),
 		 '1diceDCd27Cc22HV3qPNZKwGnZ8QwhLTc' : (60000, 0.91553),
@@ -169,9 +169,11 @@ def main():
 									if output['addr'] in bet.payout_addr:
 										bet.payout_addr = output['addr']
 										bet.payout = int(output['value'])
+										#if bet.bet_tx_hash == 'd5cc93054e1c8ea9608cea821130186d3454a4046c1618c27090bbf70b4585af':
+											#bet.print_bet()
 										if bet.payout == bet.amt:
 											bet.outcome = 'refund'
-										elif bet.payout == bet.amt * .005:
+										elif bet.payout < bet.amt:
 											bet.outcome = 'loss'
 										else:
 											bet.outcome = 'win'
@@ -181,9 +183,10 @@ def main():
 
 		if bet.outcome is not None:
 			#bet.print_bet()
+			#time.sleep(1)
 			c.execute("INSERT INTO bets VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)" , (bet.bet_tx_hash, bet.time, bet.s_addr, bet.amt, bet.fee, bet.payout_addr, bet.payout_tx_hash, bet.payout, bet.outcome))
 		else:
-			print bet.print_bet()
+			#print bet.print_bet()
 			unmatched_bets += 1
 			#print 'bet %s could not be matched!' % bet.bet_tx_hash
 

@@ -13,8 +13,8 @@ SATOSHIperBTC = 100000000  # satoshi unit
 # MARCH blocks
 # 223665 229007
 
-START_BLOCK = 223665
-END_BLOCK = 223670
+START_BLOCK = 226041
+END_BLOCK = 229007
 
 addrs = {'1dice9wVtrKZTBbAZqz1XiTmboYyvpD3t' : (64000, 0.97656),
 		 '1diceDCd27Cc22HV3qPNZKwGnZ8QwhLTc' : (60000, 0.91553),
@@ -130,21 +130,24 @@ def main():
 
 					tx_id = (tx['tx_index'], output['addr'])
 					if tx_id not in bets:
-						bet.s_addr = output['addr']
-						bet.amt = int(output['value'])
-						bet.fee = get_fee(tx)
-						bet.time = int(tx['time'])
-						bet.tx_index = tx['tx_index']
-						bet.bet_tx_hash = tx['hash']
-						bet.inputs = tx['inputs'] # save all inputs
-						# need to determine payout addr
-						#if tx['hash'] == '9e43048bca874635774d42fc7f7fb3046c161bd26b88c3e14c2a35c6bf32cc95':
-							#print tx['inputs']
+						try:
+							bet.s_addr = output['addr']
+							bet.amt = int(output['value'])
+							bet.fee = get_fee(tx)
+							bet.time = int(tx['time'])
+							bet.tx_index = tx['tx_index']
+							bet.bet_tx_hash = tx['hash']
+							bet.inputs = tx['inputs'] # save all inputs
+							# need to determine payout addr
+							#if tx['hash'] == '9e43048bca874635774d42fc7f7fb3046c161bd26b88c3e14c2a35c6bf32cc95':
+								#print tx['inputs']
 
-						if bet.payout_addr is None:
-							bet.payout_addr = get_payout_addrs(tx)
+							if bet.payout_addr is None:
+								bet.payout_addr = get_payout_addrs(tx)
 
-						bets[tx_id] = bet
+							bets[tx_id] = bet
+						except KeyError:
+							print 'key error for transaction %d bet was thrown out' % tx['tx_index']
 
 
 	for block_num in range(START_BLOCK, END_BLOCK+20):

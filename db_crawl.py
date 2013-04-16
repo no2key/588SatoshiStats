@@ -1,7 +1,9 @@
 #!/usr/local/bin/python
 
 import sqlite3
+import scipy.stats
 
+SATOSHIperBTC = 100000000 
 
 addrs = {'1dice9wVtrKZTBbAZqz1XiTmboYyvpD3t' : (64000, 0.97656),
 		 '1diceDCd27Cc22HV3qPNZKwGnZ8QwhLTc' : (60000, 0.91553),
@@ -33,33 +35,51 @@ addrs = {'1dice9wVtrKZTBbAZqz1XiTmboYyvpD3t' : (64000, 0.97656),
 
 def parse_by_addr(cursor):
 
-	for addr, (target, chance) in addrs.items():
-		print 'Getting stats for %s which has a win percentage of %f' % (addr[:9], chance*100)
+	#print "Address | %s | %s | %s | %s | %s | %s" , (')
+
+	for addr, (target, chance) in sorted(addrs.items(), key=lambda x: x[1]):
 		wins = 0.0
 		losses = 0.0
+		refunds = 0.0
 		count = 0.0
+		btc_in = 0.0
+		btc_out = 0.0
 		for row in cursor.execute("SELECT * FROM bets WHERE satoshi_addr = ?" , [addr]):
-			if chance < 0.1:
-				if row[-1] == 'win':
-					print '-----'
-					print row[0]
-					print row[6]
-			if row[-1] == 'win':
+			if row[8] == 'win':
 				wins += 1
-			else:
+			elif row[8] == 'loss':
 				losses += 1
-			count += 1
-		print ' wins: %d' % wins
-		print ' losses: %d' % losses
-		if count:
-			win_percentage = float(wins/count) * 100
-			print ' win percentage:  %f' % win_percentage
-			if win_percentage > chance:
-				print 'Betters are beating satoshi by %s percentage points.\n' % (win_percentage - chance)
-			elif win_percentage < chance:
-				print 'Betters are losing to satoshi by %s percentage points.\n' % (chance - win_percentage)
 			else:
-				print 'Win percentages match published chances.\n'
+				refunds += 1
+
+			btc_in += row[3]
+			btc_out += row[7]
+			count += 1
+
+		print "%s | %d | %f | %d | %d (%f) | %d | %d | %f | %f | %f" % (addr[:8], target, chance, count, wins, (wins/count), losses, refunds, (btc_in/SATOSHIperBTC), (btc_out/SATOSHIperBTC), ((btc_in - btc_out)/SATOSHIperBTC))
+
+def detail(cursor, addr):
+	count = 0.0
+	wins = 0.0
+	losses = 0.0
+	btc_bet = 0.0
+	btc_recieved = 0.0
+	for row in cursor.execute("SELECT * FROM bets WHERE payout_addr = ? OR payout_addr = ?" , ('1AozjJpfFyQqu1eru8xvQyqw1b2Yc2hwFg', '1BrF6ogCQcUNp1KKEjtVsayHKKjkco9HUf')):
+		btc_bet = row[3]
+		btc_recieved = row[7]
+		if row[8] == 'win':
+			wins += 1
+			if (row[7]/SATOSHIperBTC) > 100:
+				print "%s: bet of %f won %f" % (row[0], row[3]/SATOSHIperBTC, row[7]/SATOSHIperBTC)
+		elif row[8] == 'loss':
+			losses += 1
+		count += 1
+
+	print count
+	print wins/count
+	print btc_recieved/SATOSHIperBTC - btc_bet/SATOSHIperBTC
+
+
 
 
 def main():
@@ -67,6 +87,7 @@ def main():
 	c = conn.cursor()
 	
 	parse_by_addr(c)
+	#detail(c, '1dice5wwEZT2u6ESAdUGG6MHgCpbQqZiy')
 
 	conn.commit()
 	conn.close()

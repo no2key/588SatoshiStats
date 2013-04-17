@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
 
 import sqlite3
-import scipy.stats
+#import scipy.stats
 
 SATOSHIperBTC = 100000000 
 
@@ -45,15 +45,15 @@ def parse_by_addr(cursor):
 		btc_in = 0.0
 		btc_out = 0.0
 		for row in cursor.execute("SELECT * FROM bets WHERE satoshi_addr = ?" , [addr]):
-			if row[8] == 'win':
+			if row[11] == 'win':
 				wins += 1
-			elif row[8] == 'loss':
+			elif row[11] == 'loss':
 				losses += 1
 			else:
 				refunds += 1
 
 			btc_in += row[3]
-			btc_out += row[7]
+			btc_out += row[10]
 			count += 1
 
 		print "%s | %d | %f | %d | %d (%f) | %d | %d | %f | %f | %f" % (addr[:8], target, chance, count, wins, (wins/count), losses, refunds, (btc_in/SATOSHIperBTC), (btc_out/SATOSHIperBTC), ((btc_in - btc_out)/SATOSHIperBTC))
@@ -67,11 +67,11 @@ def detail(cursor, addr):
 	for row in cursor.execute("SELECT * FROM bets WHERE payout_addr = ? OR payout_addr = ?" , ('1AozjJpfFyQqu1eru8xvQyqw1b2Yc2hwFg', '1BrF6ogCQcUNp1KKEjtVsayHKKjkco9HUf')):
 		btc_bet = row[3]
 		btc_recieved = row[7]
-		if row[8] == 'win':
+		if row[11] == 'win':
 			wins += 1
-			if (row[7]/SATOSHIperBTC) > 100:
-				print "%s: bet of %f won %f" % (row[0], row[3]/SATOSHIperBTC, row[7]/SATOSHIperBTC)
-		elif row[8] == 'loss':
+			if (row[10]/SATOSHIperBTC) > 100:
+				print "%s: bet of %f won %f" % (row[0], row[3]/SATOSHIperBTC, row[10]/SATOSHIperBTC)
+		elif row[11] == 'loss':
 			losses += 1
 		count += 1
 

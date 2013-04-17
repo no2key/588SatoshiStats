@@ -14,7 +14,7 @@ SATOSHIperBTC = 100000000  # satoshi unit
 # 223665 229007
 
 START_BLOCK = 223665
-END_BLOCK = 224000
+END_BLOCK = 223765
 
 addrs = {'1dice9wVtrKZTBbAZqz1XiTmboYyvpD3t' : (64000, 0.97656),
 		 '1diceDCd27Cc22HV3qPNZKwGnZ8QwhLTc' : (60000, 0.91553),
@@ -56,6 +56,7 @@ class Bet(object):
 		self.outcome = None
 		self.inputs = None
 		self.payout_addr = None
+		self.payout_sp_addr = 'no'
 		self.payout_tx_index = None
 		self.payout_tx_hash = None
 
@@ -98,8 +99,11 @@ def main():
 									   time int,
 									   satoshi_addr text,
 									   bet_amount int,
+									   input_addrs text,
+									   num_inputs,
 									   bet_fee int,
 									   payout_addr text,
+									   payout_sp_addr text,
 									   payout_tx_hash text,
 									   payout_amount int,
 									   outcome text)''')
@@ -127,6 +131,7 @@ def main():
 							if p_output['addr'] not in addrs:
 								if p_output['value'] == 543210:
 									bet.payout_addr = p_output['addr']
+									bet.payout_sp_addr = 'yes'
 
 					tx_id = (tx['tx_index'], output['addr'])
 					if tx_id not in bets:
@@ -187,7 +192,12 @@ def main():
 		if bet.outcome is not None:
 			#bet.print_bet()
 			#time.sleep(1)
-			c.execute("INSERT INTO bets VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)" , (bet.bet_tx_hash, bet.time, bet.s_addr, bet.amt, bet.fee, bet.payout_addr, bet.payout_tx_hash, bet.payout, bet.outcome))
+			num_inputs = 0
+			input_addrs = ""
+			for inp in bet.inputs:
+				num_inputs += 1
+				input_addrs += inp['prev_out']['addr'] + " "
+			c.execute("INSERT INTO bets VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" , (bet.bet_tx_hash, bet.time, bet.s_addr, bet.amt, num_inputs, input_addrs, bet.fee, bet.payout_addr, bet.payout_sp_addr, bet.payout_tx_hash, bet.payout, bet.outcome))
 		else:
 			#print bet.print_bet()
 			unmatched_bets += 1

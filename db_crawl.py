@@ -1,9 +1,13 @@
 #!/usr/local/bin/python
 
 import sqlite3
-#import scipy.stats
+import numpy
+import scipy.stats
+import datetime
+import time
 
-SATOSHIperBTC = 100000000 
+SATOSHIperBTC = 100000000
+MTGOX = 80.46
 
 addrs = {'1dice9wVtrKZTBbAZqz1XiTmboYyvpD3t' : (64000, 0.97656),
 		 '1diceDCd27Cc22HV3qPNZKwGnZ8QwhLTc' : (60000, 0.91553),
@@ -33,6 +37,61 @@ addrs = {'1dice9wVtrKZTBbAZqz1XiTmboYyvpD3t' : (64000, 0.97656),
 		 '1dice1Qf4Br5EYjj9rnHWqgMVYnQWehYG' : (2, 0.00003),
 		 '1dice1e6pdhLzzWQq7yMidf6j8eAg7pkY' : (1, 0.00002)}
 
+def binom_test(cursor):
+	for addr, (target, chance) in sorted(addrs.items(), key=lambda x: x[1]):
+		wins = 0.0
+		losses = 0.0
+		refunds = 0.0
+		count = 0.0
+		for row in cursor.execute("SELECT * FROM bets WHERE satoshi_addr = ?" , [addr]):
+			if row[11] == 'win':
+				wins += 1
+			elif row[11] == 'loss':
+				losses += 1
+			else:
+				refunds += 1
+
+			count += 1
+
+		print '-----' 
+		print addr[:8]
+		print scipy.stats.binom_test(wins, (count-refunds), chance)
+
+
+def get_distinct_payout_addrs(cursor):
+	pay_addrs = []
+	for row in cursor.execute("SELECT DISTINCT payout_addr FROM bets"):
+		pay_addrs.append(row[0])
+
+	for addr in pay_addrs:
+		wins = 0.0
+		losses = 0.0
+		refunds = 0.0
+		count = 0.0
+		btc_in = 0.0
+		btc_out = 0.0
+		for row in cursor.execute("SELECT * FROM bets WHERE payout_addr = ?", [addr]):
+			if row[11] == 'win':
+				wins += 1
+			elif row[11] == 'loss':
+				losses += 1
+			else:
+				refunds += 1
+
+			btc_in += row[3]
+			btc_out += row[10]
+			count += 1
+
+		valid_bets = count - refunds
+		if valid_bets <= 0:
+			continue
+		win_pct = wins/valid_bets
+		earnings = ((btc_out-btc_in)/SATOSHIperBTC) * MTGOX
+		if earnings > 1000.0 and valid_bets > 50:
+			print '------'
+			print '%s is winning %.2f%% of the time (%d bets) - earnings: %.2f' % (addr, win_pct*100, valid_bets, earnings)
+
+
 def parse_by_addr(cursor):
 
 	#print "Address | %s | %s | %s | %s | %s | %s" , (')
@@ -56,38 +115,105 @@ def parse_by_addr(cursor):
 			btc_out += row[10]
 			count += 1
 
+		p_val = scipy.stats.binom_test(wins, (count-refunds), chance)
 		print "%s | %d | %f | %d | %d (%f) | %d | %d | %f | %f | %f" % (addr[:8], target, chance, count, wins, (wins/count), losses, refunds, (btc_in/SATOSHIperBTC), (btc_out/SATOSHIperBTC), ((btc_in - btc_out)/SATOSHIperBTC))
+		print '\t',
+		print p_val
+		if (p_val < 0.01):
+			print '\tREJECT NULL HYPOTHESIS'
 
-def detail(cursor, addr):
+
+def addr_detail(cursor, addr):
 	count = 0.0
 	wins = 0.0
 	losses = 0.0
+	refunds = 0.0
 	btc_bet = 0.0
 	btc_recieved = 0.0
-	for row in cursor.execute("SELECT * FROM bets WHERE payout_addr = ? OR payout_addr = ?" , ('1AozjJpfFyQqu1eru8xvQyqw1b2Yc2hwFg', '1BrF6ogCQcUNp1KKEjtVsayHKKjkco9HUf')):
-		btc_bet = row[3]
-		btc_recieved = row[7]
+
+	for row in cursor.execute("SELECT * FROM bets WHERE payout_addr = ?", [addr]):
+		btc_bet += row[3]
+		btc_recieved += row[10]
 		if row[11] == 'win':
 			wins += 1
-			if (row[10]/SATOSHIperBTC) > 100:
-				print "%s: bet of %f won %f" % (row[0], row[3]/SATOSHIperBTC, row[10]/SATOSHIperBTC)
 		elif row[11] == 'loss':
 			losses += 1
+		else:
+			refunds += 1
 		count += 1
 
-	print count
-	print wins/count
-	print btc_recieved/SATOSHIperBTC - btc_bet/SATOSHIperBTC
+	valid_bets = count - refunds
+	if valid_bets <= 0:
+		return
+	win_pct = wins/valid_bets
+	earnings = ((btc_recieved - btc_bet)/SATOSHIperBTC) * MTGOX
+	print 'user addr %s made %.0f bets, won %.2f%% of the time, and earned $%.2f' % (addr, valid_bets, win_pct*100, earnings)
 
 
+
+def fee_analysis(cursor):
+	pay_addrs = []
+	for row in cursor.execute("SELECT DISTINCT payout_addr FROM bets LIMIT 1000"):
+		pay_addrs.append(row[0])
+
+	addr_fees = {}
+	for addr in pay_addrs:
+		print 'Getting fees for %s' % addr
+		fees = []	
+		for row in cursor.execute("SELECT bet_fee FROM bets WHERE payout_addr = ?", [addr]):
+			fees.append(float(row[0])/SATOSHIperBTC)
+		addr_fees[addr] = sum(fees)/len(fees)
+
+	mean = numpy.mean(addr_fees.values())
+	st_dev = numpy.std(addr_fees.values())
+	print 'Mean of addr fee means: %.5f (std: %.8f)' % (mean, st_dev)
+	high_fee_addrs = []
+	for key, value in addr_fees.items():
+		if (value > (mean + (st_dev * 2))):
+			print 'addr: %s   fee mean: %.4f' % (key, value)
+			high_fee_addrs.append(key)
+
+	for addr in high_fee_addrs:
+		addr_detail(cursor, addr)
+
+
+def find_start_seconds(cursor):
+	cursor.execute("SELECT time FROM bets ORDER BY time ASC LIMIT 1")
+	date = datetime.datetime.fromtimestamp(cursor.fetchone()[0])
+	return datetime.datetime(date.year, date.month, date.day, 0, 0, 0)
+
+def find_end_seconds(cursor):
+	cursor.execute("SELECT time FROM bets ORDER BY time DESC LIMIT 1")
+	date = datetime.datetime.fromtimestamp(cursor.fetchone()[0])
+	return datetime.datetime(date.year, date.month, date.day, 23, 59, 59)
+
+def daterange(start_date, end_date):
+	delta = end_date - start_date
+	for n in range(int(delta.days * 24 + delta.seconds // 3600)):
+		yield start_date + datetime.timedelta(hours=n)
+
+def time_eval(cursor):
+	start = find_start_seconds(cursor)
+	end = find_end_seconds(cursor)
+
+	for single_date in daterange(start, end):
+		print '%s\t%s' % (single_date.strftime("%Y-%m-%d"), single_date.strftime("%s"))
+
+
+	#add_day = datetime.timedelta(days=1)
+	#rint (start + add_day).strftime("%s")
 
 
 def main():
-	conn = sqlite3.connect('bets.db')
+	conn = sqlite3.connect('bets-223665-224165.db')
 	c = conn.cursor()
-	
-	parse_by_addr(c)
-	#detail(c, '1dice5wwEZT2u6ESAdUGG6MHgCpbQqZiy')
+
+	time_eval(c)
+	#fee_analysis(c)
+	#get_distinct_payout_addrs(c)
+	#binom_test(c)
+	#parse_by_addr(c)
+	#addr_detail(c)
 
 	conn.commit()
 	conn.close()

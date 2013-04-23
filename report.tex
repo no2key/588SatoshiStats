@@ -28,19 +28,18 @@
 \date{}
 
 %make title bold and 14 pt font (Latex default is non-bold, 16 pt)
-\title{\Large \bf Wonderful : A Terrific Application and Fascinating Paper}
+\title{\Large \bf Witty Title : An Audit of the SatoshiDice Bitcoin Gambling Service}
 
 %for single author (just remove % characters)
 \author{
-{\rm Your N.\ Here}\\
-Your Institution
+{\rm J.\ Brown}\\
+The University of Michigan
 \and
-{\rm Second Name}\\
-Second Institution
-% copy the following lines to add more authors
-% \and
-% {\rm Name}\\
-%Name Institution
+{\rm A. Cope}\\
+The University of Michigan
+\and
+{\rm J. O'Neil}\\
+The University of Michigan
 } % end author
 
 \maketitle
@@ -61,29 +60,7 @@ text. \\
 
 More fascinating text. Features\endnote{Remember to use endnotes, not footnotes!} galore, plethora of promises.\\
 
-\section{This is Another Section}
-
-Some embedded literal typset code might 
-look like the following :
-
-{\tt \small
-\begin{verbatim}
-int wrap_fact(ClientData clientData,
-              Tcl_Interp *interp,
-              int argc, char *argv[]) {
-    int result;
-    int arg0;
-    if (argc != 2) {
-        interp->result = "wrong # args";
-        return TCL_ERROR;
-    }
-    arg0 = atoi(argv[1]);
-    result = fact(arg0);
-    sprintf(interp->result,"%d",result);
-    return TCL_OK;
-}
-\end{verbatim}
-}
+\section{Background and Related Work}
 
 Now we're going to cite somebody.  Watch for the cite tag.
 Here it comes~\cite{Chaum1981,Diffie1976}.  The tilde character (\~{})
@@ -91,8 +68,13 @@ in the source means a non-breaking space.  This way, your reference will
 always be attached to the word that preceded it, instead of going to the
 next line.
 
-\section{This Section has SubSections}
-\subsection{First SubSection}
+\section{Architecture and Methodology}
+\subsection{Blockchain data collection}
+\subsection{SatoshiDice Bet extraction?}
+
+\section{Results and Evaluation}
+\subsection{SatoshiDice fairness}
+\subsection{Betting behavior analysis}
 
 Here's a typical figure reference.  The figure is centered at the
 top of the column.  It's scaled.  It's explicitly placed.  You'll
@@ -111,7 +93,7 @@ have to tweak the numbers to get what you want.\\
 This text came after the figure, so we'll casually refer to Figure 1
 as we go on our merry way.
 
-\subsection{New Subsection}
+
 
 It can get tricky typesetting Tcl and C code in LaTeX because they share
 a lot of mystical feelings about certain magic characters.  You
@@ -154,32 +136,10 @@ the number of objects read.
 \end{itemize}
 This concludes the definitions tag.
 
-\subsection{How to Build Your Paper}
-
-You have to run {\tt latex} once to prepare your references for
-munging.  Then run {\tt bibtex} to build your bibliography metadata.
-Then run {\tt latex} twice to ensure all references have been resolved.
-If your source file is called {\tt usenixTemplate.tex} and your {\tt
-  bibtex} file is called {\tt usenixTemplate.bib}, here's what you do:
-{\tt \small
-\begin{verbatim}
-latex usenixTemplate
-bibtex usenixTemplate
-latex usenixTemplate
-latex usenixTemplate
-\end{verbatim}
-}
-
-
-\subsection{Last SubSection}
-
-Well, it's getting boring isn't it.  This is the last subsection
-before we wrap it up.
 
 \section{Acknowledgments}
 
-A polite author always includes acknowledgments.  Thank everyone,
-especially those who funded the work. 
+We would like to thank J. Alex Halderman, Eric Wustrow, and Zakir Durumeric for providing valuable insight during this course.
 
 \section{Availability}
 

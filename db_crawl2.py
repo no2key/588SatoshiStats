@@ -146,8 +146,10 @@ def addr_detail(cursor, addr):
 	if valid_bets <= 0:
 		return
 	win_pct = wins/valid_bets
-	earnings = ((btc_recieved - btc_bet)/SATOSHIperBTC) * MTGOX
-	print 'user addr %s made %.0f bets, won %.2f%% of the time, and earned $%.2f' % (addr, valid_bets, win_pct*100, earnings)
+	profit = btc_in - btc_out
+	roi = (profit / btc_in) * 100
+	dollar_earnings = (profit / SATOSHIperBTC) * MTGOX
+	print '%s made %.0f bets, won %.2f%% of the time, earned %.2f btc with a a %.2f' % (addr[:5], valid_bets, win_pct*100, dollar_earnings, roi)
 
 
 
@@ -177,43 +179,119 @@ def fee_analysis(cursor):
 		addr_detail(cursor, addr)
 
 
-def find_start_seconds(cursor):
-	cursor.execute("SELECT time FROM bets ORDER BY time ASC LIMIT 1")
-	date = datetime.datetime.fromtimestamp(cursor.fetchone()[0])
-	return datetime.datetime(date.year, date.month, date.day, 0, 0, 0)
-
-def find_end_seconds(cursor):
-	cursor.execute("SELECT time FROM bets ORDER BY time DESC LIMIT 1")
-	date = datetime.datetime.fromtimestamp(cursor.fetchone()[0])
-	return datetime.datetime(date.year, date.month, date.day, 23, 59, 59)
-
 def daterange(start_date, end_date):
 	delta = end_date - start_date
-	for n in range(int(delta.days * 24 + delta.seconds // 3600)):
-		yield start_date + datetime.timedelta(hours=n)
+	for n in range(int(delta.days)):
+	#for n in range(int(delta.days * 24 + delta.seconds // 3600)):
+		yield start_date + datetime.timedelta(n)
+		#yield start_date + datetime.timedelta(hours=n)
 
 def time_eval(cursor):
-	start = find_start_seconds(cursor)
-	end = find_end_seconds(cursor)
+	start = datetime.datetime(2013, 3, 1, 0, 0, 0)
+	end = datetime.datetime(2013, 3, 31, 23, 59, 59)
 
-	for single_date in daterange(start, end):
-		print '%s\t%s' % (single_date.strftime("%Y-%m-%d"), single_date.strftime("%s"))
+	for base_date in daterange(start, end):
+		end_date = base_date + datetime.timedelta(1)
+
+		start_date_int = base_date.strftime("%s")
+		end_date_int = end_date.strftime("%s")
+
+		print 'Evaulating bets between %s and %s' % (base_date.strftime("%Y-%m-%d %H:%M:%S"), end_date.strftime("%Y-%m-%d %H:%M:%S"))
+		for addr, (target, chance) in sorted(addrs.items(), key=lambda x: x[1]):
+			wins = 0.0
+			losses = 0.0
+			refunds = 0.0
+			count = 0.0
+			btc_in = 0.0
+			btc_out = 0.0
+			for row in cursor.execute('SELECT * FROM bets WHERE satoshi_addr = ? AND time >= ? AND time < ?', (addr, start_date_int, end_date_int)):
+				if row[11] == 'win':
+					wins += 1
+				elif row[11] == 'loss':
+					losses += 1
+				else:
+					refunds += 1
+
+				btc_in += row[3]
+				btc_out += row[10]
+				count += 1
+
+			valid_bets = count - refunds
+			win_pct = 0
+			if count:
+				win_pct = wins/valid_bets
+
+			profit = btc_in - btc_out
+			roi = (profit / btc_in) * 100
+			p_val = scipy.stats.binom_test(wins, valid_bets, chance)
+			if p_val < 0.05 and win_pct > chance:
+				print "%s | %d | %f | %d | %d (%f) | %d | %d | %f | %f | %f" % (addr[:8], target, chance, count, wins, win_pct, losses, refunds, (btc_out/SATOSHIperBTC), ((btc_in - btc_out)/SATOSHIperBTC))
+				print '\t',
+				print p_val
 
 
-	#add_day = datetime.timedelta(days=1)
-	#rint (start + add_day).strftime("%s")
+# def test(cursor):
+# 	bets = []
+# 	for row in cursor.execute('SELECT * FROM bets WHERE payout_sp_addr = ?', ['yes']):
+# 		bets.append(row[0])
+# 	print len(bets)
+
+	# start = datetime.datetime(2013, 3, 1, 0, 0, 0)
+	# end = datetime.datetime(2013, 3, 31, 23, 59, 59)
+
+	# for base_date in daterange(start, end):
+	# 	end_date = base_date + datetime.timedelta(1)
+
+	# 	start_date_int = base_date.strftime("%s")
+	# 	end_date_int = end_date.strftime("%s")
+
+def test(cursor):
+	bettors = []
+	for row in cursor.execute('SELECT DISTINCT payout_addr FROM bets LIMIT 100'):
+		bettors.append(row[0])
+	print '  There were %d distinct bettors' % len(bettors)
+	for bettor in bettors:
+		count = 0.0
+		wins = 0.0
+		losses = 0.0
+		refunds = 0.0
+		btc_bet = 0.0
+		btc_recieved = 0.0
+		for row in cursor.execute("SELECT * FROM bets WHERE payout_addr = ?", [bettor]):
+			btc_bet += row[3]
+			btc_recieved += row[10]
+			if row[11] == 'win':
+				wins += 1
+			elif row[11] == 'loss':
+				losses += 1
+			else:
+				refunds += 1
+			count += 1
+
+		valid_bets = count - refunds
+		if valid_bets <= 0:
+			continue
+		win_pct = wins/valid_bets
+		profit = btc_recieved - btc_bet
+		roi = (profit / btc_bet) * 100
+		dollar_earnings = (profit / SATOSHIperBTC) * MTGOX
+		if roi > 10:
+			print '%s made %.0f bets, won %.2f%% of the time, earned $%.2f with an roi of %.2f%%' % (bettor, valid_bets, win_pct*100, dollar_earnings, roi)
+
+
 
 
 def main():
-	conn = sqlite3.connect('bets-223665-224165.db')
+	conn = sqlite3.connect('bets-223665-229007.db')
 	c = conn.cursor()
 
-	time_eval(c)
+	#time_eval(c)
 	#fee_analysis(c)
 	#get_distinct_payout_addrs(c)
 	#binom_test(c)
 	#parse_by_addr(c)
 	#addr_detail(c)
+	test(c)
 
 	conn.commit()
 	conn.close()

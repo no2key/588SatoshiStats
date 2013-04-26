@@ -1,24 +1,3 @@
-% TEMPLATE for Usenix papers, specifically to meet requirements of
-%  USENIX '05
-% originally a template for producing IEEE-format articles using LaTeX.
-%   written by Matthew Ward, CS Department, Worcester Polytechnic Institute.
-% adapted by David Beazley for his excellent SWIG paper in Proceedings,
-%   Tcl 96
-% turned into a smartass generic template by De Clarke, with thanks to
-%   both the above pioneers
-% use at your own risk.  Complaints to /dev/null.
-% make it two column with no page numbering, default is 10 point
-
-% Munged by Fred Douglis <douglis@research.att.com> 10/97 to separate
-% the .sty file from the LaTeX source template, so that people can
-% more easily include the .sty file into an existing document.  Also
-% changed to more closely follow the style guidelines as represented
-% by the Word sample file. 
-
-% Note that since 2010, USENIX does not require endnotes. If you want
-% foot of page notes, don't include the endnotes package in the 
-% usepackage command, below.
-
 % This version uses the latex2e styles, not the very ancient 2.09 stuff.
 \documentclass[letterpaper,twocolumn,10pt]{article}
 \usepackage{usenix,epsfig,endnotes}
@@ -28,7 +7,7 @@
 \date{}
 
 %make title bold and 14 pt font (Latex default is non-bold, 16 pt)
-\title{\Large \bf Witty Title : An Audit of the SatoshiDice Bitcoin Gambling Service}
+\title{\Large \bf Fair Dice : An Audit of the SatoshiDice Bitcoin Gambling Service}
 
 %for single author (just remove % characters)
 \author{
@@ -44,19 +23,16 @@ The University of Michigan
 
 \maketitle
 
-% Use the following at camera-ready time to suppress page numbers.
-% Comment it out when you first submit the paper for review.
 \thispagestyle{empty}
 
 
 \subsection*{Abstract}
-Your Abstract Text Goes Here.  Just a few facts.
-Whet our appetites.
+THIS IS THE ABSTRACT
 
 \section{Introduction}
 Since its establishment in April 2012, the SatoshiDice bitcoin gambling service has grown to account for over half of the total bitcoin transactions that are carried out day-to-day(citation?).  As a result and in conjunction with the Bitcoin scheme, this gambling service has attracted a lot of media attention, but so far no security researchers have attempted to answer simple questions such as: do actual winning percentages match the advertised odds?  Do some users consistently enjoy above average winning percentages?  Is the service used as a vehicle to launder money, as is a concern in other online gambling system that do not feature the Bitcoin digital currency? 
  
-n this paper, we answer all of these questions as well as pose additional extensions to the betting protocol.  We analyzed the full public record of bitcoin transactions for the entire month of March 2013, matched all transactions to and from SatoshiDice addresses, and built a database of corresponding transactions representing over 500,000 individual bets.  We leave some of the additional details of our transaction processing methodology for Section ***.  With this database of bets, we analyzed the statistical properties of these bets to determine how closely actual winning percentages matched advertised odds and if there were any significant discrepancies.  Furthermore, we tracked bitcoin transaction chains from distinct betting and payout addresses to establish the degree to which the high winning percentage addresses were be used for money laundering.
+In this paper, we answer all of these questions as well as pose additional extensions to the betting protocol.  We analyzed the full public record of bitcoin transactions for the entire month of March 2013, matched all transactions to and from SatoshiDice addresses, and built a database of corresponding transactions representing over 500,000 individual bets.  We leave some of the additional details of our transaction processing methodology for Section 3.  With this database of bets, we analyzed the statistical properties of these bets to determine how closely actual winning percentages matched advertised odds and if there were any significant discrepancies.  Furthermore, we tracked bitcoin transaction chains from distinct betting and payout addresses to establish the degree to which the high winning percentage addresses were be used for money laundering.
  
 At the conclusion of our statistical analysis, we were able to conclude that SatoshiDice users are indeed experiencing odds that are not significantly different than those advertised by the gambling service. Also, we concluded that no significant amount of bitcoin is being transacted through the high percentage addresses in an attempt to hide the initial supply of digital currency for money laundering purposes.  Lastly, we propose a novel betting protocol that mitigates the consequences of key exposure by generating and publishing new keys only one day in advance rather than years in advance.
  
@@ -68,7 +44,7 @@ The security of the bitcoin protocol has been studied extensively[10][11], and i
 
 First and foremost, all Bitcoin transactions are publicly recorded, which is incredibly useful for performing an audit. As bitcoins are created, all transactions get written down in what is known as the blockchain. One transactions get written to the blockchain, this data becomes an unmodifiable record of transactions. By downloading a section of the blockchain, we are able to get a complete and accurate account of all transactions that happened within our desired timeframe. Though SatoshiDice provides an API for accessing statistical data on bets, we chose to collect data directly to avoid any risk of SatoshiDice compromising the data.
 
-The second important part of Bitcoins to understand is the TransactionID, which is the hash of all of the data in a Bitcoin transaction. This is incredibly useful for secure gambling. There are several well known protocols for securely generating random numbers with two parties, such that both parties are assured that the other is not cheating[12]. These protocols always require both parties to independently generate a random number. It would be a major usability burden to require users to generate their own random numbers with no assistance from SatoshiDice, and a major security flaw for SatoshiDice to generate both random numbers. Thankfully, the TransactionID is intrinsic to every transaction and serves well as a convenient psuedo-random number, making it infeasible for a gambling protocol to take advantage of poor generation on the users end.
+The second important part of Bitcoins to understand is the TransactionID, which is the hash of all of the data in a Bitcoin transaction. This is incredibly useful for secure gambling. There are several well known protocols for securely generating random numbers with two parties, such that both parties are assured that the other is not cheating[12]. These protocols always require both parties to independently generate a random number. It would be a major usability burden to require users to generate their own random numbers with no assistance from SatoshiDice, and a major security flaw for SatoshiDice to generate both random numbers. Thankfully, the TransactionID is intrinsic to every transaction and serves well as a convenient psuedorandom number, making it infeasible for a gambling protocol to take advantage of poor generation on the users end.
 
 \subsection{SatoshiDice}
 SatoshiDice is an online gambling site that deals exclusively in Bitcoins. Users gamble by sending BitCoins to a SatoshiDice address. SatoshiDice will then automatically send coins back if the user wins.[include picture of SatoshiDice around here] What makes SatoshiDice and other bitcoin gambling sites interesting is that they use cryptography in an attempt to prove that bets are fair. A detailed description is avoidable on their site[13]. In short, ahead of time they generate a random secret key $k$ and publish the SHA-2 hash of a secret key. $H(k)$. When you place a bet,they receive your transaction-id, and then they take the lucky number  $ \leftarrow $HMAC(key,Transcation-ID). 
@@ -86,7 +62,7 @@ Blockchain.info is a site that allows you to navigate the Bitcoin blockchain.  W
 Each bitcoin transaction keeps track of a number of attributes associated with the transaction.  These include the time of transaction, a hash of the transaction, and a transaction index.  Additionally, each transaction has a number of inputs specifying all the addresses where the incoming bitcoins for that transaction are coming from and how much from each address.  The outputs specify to what address to bitcoins are being sent to and the amount sent.  We were then able to process these transactions and extract individual bets made to Satoshi Dice.  
 
 \subsection{SatoshiDice Bet extraction}
-To find bets placed to SatoshiDice we went through all the transaction data we collected and found every transaction that specified one of the 27 SatoshiDice addresses as an output.  When we found a bet placed to SatoshiDice we created a bet object and recorded the amount bet, which address it was placed to, and the transaction index. We also needed to record the address where the expected payout was going.  SatoshiDice will always send some amount of bitcoin back to the gambler.  For a win this will be the gambler’s bet times the prize multipler, for a loss SatoshiDice returns the bet times .005 BTC, and for a refund the bet is returned.  Refunds are given if the gambler’s bet was not within the minimum and maximum bet allowed for that address.  SatoshiDice will normally send this back to address the bet was placed from but the gambler can specify a payout address if they would like.  To do this they send exactly 0.0054321 BTC to the address they want to be paid to in that same transaction.  In addition to recording these addresses we record, time the bet was placed and the hash of the transaction.  After doing this for March’s blockchain we had all bets placed to SatoshiDice.  
+To find bets placed to SatoshiDice we went through all the transaction data we collected and found every transaction that specified one of the 27 SatoshiDice addresses as an output.  When we found a bet placed to SatoshiDice we created a bet object and recorded the amount bet, which address it was placed to, and the transaction index. We also needed to record the address where the expected payout was going.  SatoshiDice will always send some amount of bitcoin back to the gambler.  For a win this will be the gambler’s bet times the prize multiplier, for a loss SatoshiDice returns the bet times .005 BTC, and for a refund the bet is returned.  Refunds are given if the gambler’s bet was not within the minimum and maximum bet allowed for that address.  SatoshiDice will normally send this back to address the bet was placed from but the gambler can specify a payout address if they would like.  To do this they send exactly 0.0054321 BTC to the address they want to be paid to in that same transaction.  In addition to recording these addresses we record, time the bet was placed and the hash of the transaction.  After doing this for March’s blockchain we had all bets placed to SatoshiDice.  
 
 Then we went through March’s blockchain again to match the payout to the bet placed.  We looked for transactions made from the 27 SatoshiDice addresses.  We went through all outputs for those transactions to find the bet they are paying back.  We matched payback to placed bet by matching both the SatoshiDice address of where the payment was coming from and the transaction index of placed bet to the input of the current transaction.  We record the bet as a win, loss, or refund based on the amount Satoshi Dice pays back compared to the amount the gambler bet.   If the amount returned is greater than the amount bet it is a win, less it is a loss, equal it is a refund.  After gathering all this information we had a database of about 500,000 bets(placement and repayment data) placed to Satoshi Dice in March 2013.
 
@@ -97,18 +73,16 @@ In the following section we will discuss and analyze these results.
 
 Table 1 - For each SatoshiDice address we performed a one-tail binomial test to test the statistical significance of our results.  We computed the p value based on the expected win rate, the actual win rate, and number of bets for that address.  
 
-
-
 \section{Results and Evaluation}
 As can be seen in Figure 1 (table of p-vals), using a confidence level of .10, there are no betting addresses that have significantly different actual winning percentages from what SatoshiDice publishes on their webpage.  We did observe some addresses that, on individual days, demonstrated significantly different winning percentages but that is to be expected in an gambling context where betters may just be getting lucky or unlucky on a given day.  Thus, we do not have significant evidence to support the hypothesis that there is any irregular betting activity taking place using the SatoshiDice system.
 
-In addition to auditing the winning percentages of SatoshiDice, we aimed to verify the claim that SatoshiDice was holding a 1.9percent house edge over betters and thus would be collecting a profit approximately equal to 0.019 * total-BTC-bet.  SD recieved x BTC from bettors in the month of March and paid out a total of y BTC.  This equates to a total profit of z BTC, or a *V* margin over gross revenue.  These figures demonstrate that SatoshiDice is indeed holding a house edge over bettors that is consistent with what they advertise.
+In addition to auditing the winning percentages of SatoshiDice, we aimed to verify the claim that SatoshiDice was holding a 1.9percent house edge over betters and thus would be collecting a profit approximately equal to 0.019 * total-BTC-bet.  SD received x BTC from bettors in the month of March and paid out a total of y BTC.  This equates to a total profit of z BTC, or a *V* margin over gross revenue.  These figures demonstrate that SatoshiDice is indeed holding a house edge over bettors that is consistent with what they advertise.
 
 After further examination following our security symposium presentation, we determined that our initial method of determining the outcome of bets (win/loss/refund) was flawed.  For high percentage betting addresses, such as the under-64000 address, the bet multiplier on a win is so low that for small bets, the fee SatoshiDice pays on the transaction returning winnings (.0005 BTC), which is deducted from the winnings, results in the bettor actually losing money.  Out of x bets to the under-64000 address and y bets to the under-32000 address, we observed this phenomenon z number of times.  The SatoshiDice webpage does indicate that this transaction fee is deducted from the winnings but gives bettors no warning that it may result a net loss of money on winning bets.
 
 Finally, after examining bets to the high winning percentage addresses using custom payout addresses, we determined that there is no evidence of individuals using SatoshiDice as a mixing service in an attempt to obscure the original source of their bitcoin supply.  Using this custom payout address feature of SatoshiDice, bettors can create long chains of transaction history and make it very difficult for anyone trying to determine the original source address, adding anonymity to their activity on the Bitcoin network.  Although we did hypothesize that this behavior was taking place using the SatoshiDice system, we observed the following results:
 
-Out of the x # of bets placed to the highest winning percentage address (1dice....), only y bets utilized the custom payout address feature.  Of these y bets, only z specified a custom payout address that was actually distinct from the input address.  Of these z bets, there was only q BTC *add dollar equivalent* transacted.  Due to the very small quantity of bitcoins transacted in this manner that would be conducive to mixing behavior, we have insufficient evidence to show that the SatoshiDice system is being used to add anonymizing to Bitcoin activity for possible illicit activity.
+Out of the x number of bets placed to the highest winning percentage address (1dice....), only y bets utilized the custom payout address feature.  Of these y bets, only z specified a custom payout address that was actually distinct from the input address.  Of these z bets, there was only q BTC *add dollar equivalent* transacted.  Due to the very small quantity of bitcoins transacted in this manner that would be conducive to mixing behavior, we have insufficient evidence to show that the SatoshiDice system is being used to add anonymizing to Bitcoin activity for possible illicit activity.
 
 \section{Alternatives}
 We propose two alternative gambling schemes.  One as an improvement on Satoshi’s protocol and a second to demonstrate some of the interesting possibilities available through bitcoin gambling.
@@ -119,10 +93,7 @@ As a user who knows the key ahead of time, it is simple to guarantee winning. In
 
 One easy way to mitigate this kind of attack is to create keys shortly before they are used, and cycle them more quickly. This would limit the amount of time an attacker could exploit compromised keys, However, it is not immediately obvious that this modification does not sacrifice the security guarantied to end users. If SatoshiDice were able to predict with some non-negligible probity a user’s transaction, they would be able to cheat users. Most of the fields in a transaction are fairly easy to predict, however bitcoin transaction also includes a digital signature. If SatoshiDice could predict the transaction, they would need be able to forge other users digital signature. We assume that no one is capable of forging signatures, so this modification does not sacrifice any security to end users.
 
-There are many interesting directions one could go with bitcoin gambling. There are bitcoin sports betting sites[15], card sites with blackjack and Video poker[15], and One person has made a casino where you can gamble real bitcoins in roulette that runs entirely in minecraft[14]. We add to these ideas with a protocol designed to crowdfund cryptography research in an interesting way. Our protocol is identical for the most part to SatoshiDice’s protocol, with two main changes. First, instead of a randomly generated key, we use a n-bit RSA private key. In addition to publishing the hash of our key ahead of time, we also publish the corresponding RSA public key. Because we provide strictly stronger assurance that our key is fixed ahead of time than SatoshiDice does, our system no less secure to end users. However, is a user is able to factor the public key we provide, they can cash out money from our earnings. The reward is built into the procoll. It is worth noting that the RSA factoring can trivially be replaced with any number of other cryptographic problems.  Though we argue this system has a nice aesthetic quality, it unfortunately does not require researchers publish their results to receive the prize money. 
-
-
-
+There are many interesting directions one could go with bitcoin gambling. There are bitcoin sports betting sites[15], card sites with blackjack and Video poker[15], and One person has made a casino where you can gamble real bitcoins in roulette that runs entirely in Minecraft[14]. We add to these ideas with a protocol designed to crowd fund cryptography research in an interesting way. Our protocol is identical for the most part to SatoshiDice’s protocol, with two main changes. First, instead of a randomly generated key, we use a n-bit RSA private key. In addition to publishing the hash of our key ahead of time, we also publish the corresponding RSA public key. Because we provide strictly stronger assurance that our key is fixed ahead of time than SatoshiDice does, our system no less secure to end users. However, is a user is able to factor the public key we provide, they can cash out money from our earnings. The reward is built into the protocol. It is worth noting that the RSA factoring can trivially be replaced with any number of other cryptographic problems.  Though we argue this system has a nice aesthetic quality, it unfortunately does not require researchers publish their results to receive the prize money. 
 
 \section{Future work}
 In the future we first and foremost want to make our dataset more robust by collecting more data.   After we have a larger dataset we want to explore further than auditing the fairness of Satoshi Dice.  This will allow us to confirm our results.   We would also like to do more analysis on Satoshi Dice as a means for money laundering.   This would mean tracking long chains of Satoshi dice bets to see if a certain bitcoin is being transferred through many different addresses.  Our dataset also includes the time each bet was placed.  With this we could do some analysis of when bets are mostly made and whether gamblers have set up automatic betting systems to mimic certain betting schemes.
